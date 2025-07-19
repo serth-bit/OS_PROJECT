@@ -91,6 +91,12 @@
     white-space: pre-wrap;
     overflow-x: auto;
     }
+    .gantt-block small {
+    font-size: 10px;
+    color: #f8f8f2;
+    display: block;
+    margin-top: -4px;
+    }
 
     /* Metrics Output */
     #metricsTable,
@@ -102,15 +108,25 @@
     overflow-x: auto;
     }
 
-    /* MLFQ inputs inline */
     .mlfq-inputs {
     display: flex;
+    flex-direction: column;
     gap: 10px;
     margin-top: 10px;
     }
 
+    .mlfq-inputs div {
+    display: flex;
+    gap: 10px;
+    }
+
     .mlfq-inputs input {
     flex: 1;
+    padding: 8px;
+    background-color: #2e2f3e;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
     }
 
     /* Scrollbars */
