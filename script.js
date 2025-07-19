@@ -1,4 +1,5 @@
         document.addEventListener("DOMContentLoaded", () => {
+        const exportBtn = document.getElementById("exportBtn");
         const algorithmSelect = document.getElementById("algorithm");
         const quantumSettings = document.getElementById("quantum-settings");
         const mlfqSettings = document.getElementById("mlfq-settings");
@@ -26,6 +27,16 @@
             generateManualInputs(count);
         });
 
+        const resetBtn = document.getElementById("resetBtn");
+        resetBtn.addEventListener("click", () => {
+            document.getElementById("process-inputs").innerHTML = "";
+            document.getElementById("ganttChart").innerHTML = "";
+            document.getElementById("ganttTimes").innerHTML = "";
+            document.getElementById("metricsTable").innerHTML = "";
+            document.getElementById("averageMetrics").innerHTML = "";
+            document.getElementById("messageBox").innerText = "";
+        });
+        
         generateBtn.addEventListener("click", () => {
             const count = parseInt(numProcessesInput.value);
             if (!count || count < 1) {
@@ -33,6 +44,33 @@
             return;
             }
             generateRandomInputs(count);
+        });
+
+        exportBtn.addEventListener("click", () => {
+            const metricsTable = document.getElementById("metricsTable");
+            const avgMetrics = document.getElementById("averageMetrics");
+            const ganttDiv = document.getElementById("ganttChart");
+
+            const content = `
+        ==== CPU SCHEDULING RESULTS ====\n
+        GANTT CHART (Visual Approximation):
+        ${ganttDiv.innerText.replace(/\n/g, '')}
+
+        PROCESS METRICS:
+        ${metricsTable.innerText}
+
+        AVERAGE METRICS:
+        ${avgMetrics.innerText}
+        `;
+
+            const blob = new Blob([content], { type: "text/plain" });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "cpu_scheduling_results.txt";
+            a.click();
+            URL.revokeObjectURL(url);
         });
 
         runBtn.addEventListener("click", () => {
@@ -127,6 +165,7 @@
             totalTAT += proc.turnaroundTime;
             totalWT += proc.waitingTime;
             totalRT += proc.responseTime;
+            
             }
             let scheduledPIDs = new Set(gantt.map(g => g.pid));
 if (scheduledPIDs.size !== p.length) {
@@ -290,16 +329,27 @@ if (scheduledPIDs.size !== p.length) {
         while (done.size < p.length) {
             while (index < p.length && p[index].arrivalTime <= time) queues[0].push(p[index++]);
 
-            let qLevel = queues.findIndex(q => q.length);
-            if (qLevel === -1) { time++; continue; }
+        let qLevel = queues.findIndex(q => q.length > 0);
+        if (qLevel === -1) { time++; continue; }
 
-            let proc = queues[qLevel].shift();
+        let proc = queues[qLevel].shift();
+
             if (proc.startTime === undefined) proc.startTime = time;
 
             let runTime = Math.min(quanta[qLevel], remaining[proc.pid]);
             runTime = Math.min(runTime, timeAllotments[qLevel] - timeSpent[proc.pid]); // Enforce time allotment
 
-            gantt.push({ pid: proc.pid, start: time, end: time + runTime, queue: qLevel });
+            const start = time;
+            time += runTime;
+
+            gantt.push({
+            pid: proc.pid,
+            start: start,
+            end: time,
+            queue: qLevel
+            });
+
+            gantt.push({ pid: proc.pid, start: start, end: time, queue: qLevel });
             time += runTime;
             remaining[proc.pid] -= runTime;
             timeSpent[proc.pid] += runTime;
@@ -338,51 +388,59 @@ if (scheduledPIDs.size !== p.length) {
     }
 
         function displayGanttChart(gantt) {
-    const chartDiv = document.getElementById("ganttChart");
-    if (!gantt.length) {
-        chartDiv.innerHTML = "<p>No Gantt chart data available.</p>";
-        return;
-    }
-
-    // Wrapper div
-    let chartWrapper = document.createElement("div");
-    chartWrapper.id = "ganttChartWrapper";
-
-    let barRow = document.createElement("div");
-    barRow.id = "ganttChart";
-
-    let timeRow = document.createElement("div");
-    timeRow.id = "ganttTimes";
-
-    gantt.forEach((entry, index) => {
-const block = document.createElement("div");
-block.className = "gantt-block";
-block.classList.add(`p${entry.pid}`); 
-
-        // If pid already includes "P", don't add again
-        block.innerHTML = `P${entry.pid}<br><small>Q${entry.queue ?? "-"}</small>`;
-
-        barRow.appendChild(block);
-
-        const time = document.createElement("div");
-        time.className = "gantt-time";
-        time.innerText = entry.start;
-        timeRow.appendChild(time);
-
-        // Add end time for last block
-        if (index === gantt.length - 1) {
-        const endTime = document.createElement("div");
-        endTime.className = "gantt-time";
-        endTime.innerText = entry.end;
-        timeRow.appendChild(endTime);
+        const chartDiv = document.getElementById("ganttChart");
+        if (!gantt.length) {
+            chartDiv.innerHTML = "<p>No Gantt chart data available.</p>";
+            return;
         }
-    });
 
-    chartWrapper.appendChild(barRow);
-    chartWrapper.appendChild(timeRow);
-    chartDiv.innerHTML = "";
-    chartDiv.appendChild(chartWrapper);
-    }
+        let chartWrapper = document.createElement("div");
+        chartWrapper.id = "ganttChartWrapper";
+
+        let barRow = document.createElement("div");
+        barRow.id = "ganttChart";
+
+        let timeRow = document.createElement("div");
+        timeRow.id = "ganttTimes";
+
+        chartDiv.innerHTML = "";
+        chartDiv.appendChild(chartWrapper);
+        chartWrapper.appendChild(barRow);
+        chartWrapper.appendChild(timeRow);
+
+        // Animate each block based on its index
+        gantt.forEach((entry, index) => {
+            setTimeout(() => {
+            const block = document.createElement("div");
+            block.className = "gantt-block";
+            block.classList.add(`p${entry.pid}`);
+
+            // Add queue indicator only if MLFQ
+            if (entry.hasOwnProperty('queue')) {
+                block.innerText = `P${entry.pid}\nQ${entry.queue}`;
+            } else {
+                block.innerText = `P${entry.pid}`;
+            }
+
+            // Gantt time start
+            const time = document.createElement("div");
+            time.className = "gantt-time";
+            time.innerText = entry.start;
+
+            barRow.appendChild(block);
+            timeRow.appendChild(time);
+
+            // Add end time for the last block
+            if (index === gantt.length - 1) {
+                const endTime = document.createElement("div");
+                endTime.className = "gantt-time";
+                endTime.innerText = entry.end;
+                timeRow.appendChild(endTime);
+            }
+
+            }, index * 300); // 300ms delay between blocks (adjust speed here)
+        });
+        }
         function displayMetricsTable(processes) {
             const tableDiv = document.getElementById("metricsTable");
             let html = `<table border="1" style="width:100%; border-collapse:collapse;"><thead><tr>
