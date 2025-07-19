@@ -275,25 +275,45 @@ if (scheduledPIDs.size !== p.length) {
             displayAverages(n, totalTAT, totalWT, totalRT);
         }
 
-       function runMLFQ(p, quanta) {
-            let time = 0, queues = [[], [], [], []], gantt = [], remaining = {}, done = new Set();
-            p.sort((a, b) => a.arrivalTime - b.arrivalTime);
-            p.forEach(proc => remaining[proc.pid] = proc.burstTime);
-            let index = 0;
-            while (done.size < p.length) {
+    function runMLFQ(p, quanta) {
+        const timeAllotments = [8, 16, 24, Infinity]; // Define your time allotment per level
+        let time = 0, queues = [[], [], [], []], gantt = [], remaining = {}, done = new Set();
+        const timeSpent = {}; // Tracks how much time a process has used in its current level
+
+        p.sort((a, b) => a.arrivalTime - b.arrivalTime);
+        p.forEach(proc => {
+            remaining[proc.pid] = proc.burstTime;
+            timeSpent[proc.pid] = 0;
+        });
+
+        let index = 0;
+        while (done.size < p.length) {
             while (index < p.length && p[index].arrivalTime <= time) queues[0].push(p[index++]);
+
             let qLevel = queues.findIndex(q => q.length);
             if (qLevel === -1) { time++; continue; }
+
             let proc = queues[qLevel].shift();
             if (proc.startTime === undefined) proc.startTime = time;
+
             let runTime = Math.min(quanta[qLevel], remaining[proc.pid]);
-            gantt.push({ pid: proc.pid, start: time, end: time + runTime });
+            runTime = Math.min(runTime, timeAllotments[qLevel] - timeSpent[proc.pid]); // Enforce time allotment
+
+            gantt.push({ pid: proc.pid, start: time, end: time + runTime, queue: qLevel });
             time += runTime;
             remaining[proc.pid] -= runTime;
+            timeSpent[proc.pid] += runTime;
+
             while (index < p.length && p[index].arrivalTime <= time) queues[0].push(p[index++]);
+
             if (remaining[proc.pid] > 0) {
-                if (qLevel < 3) queues[qLevel + 1].push(proc);
-                else queues[3].push(proc);
+                // Check if process has exhausted its allotment
+                if (timeSpent[proc.pid] >= timeAllotments[qLevel]) {
+                    timeSpent[proc.pid] = 0;
+                    queues[Math.min(qLevel + 1, 3)].push(proc);
+                } else {
+                    queues[qLevel].push(proc);
+                }
             } else {
                 proc.completionTime = time;
                 proc.turnaroundTime = time - proc.arrivalTime;
@@ -301,18 +321,20 @@ if (scheduledPIDs.size !== p.length) {
                 proc.responseTime = proc.startTime - proc.arrivalTime;
                 done.add(proc.pid);
             }
-            }
-            const totalTAT = p.reduce((acc, x) => acc + x.turnaroundTime, 0);
-            const totalWT = p.reduce((acc, x) => acc + x.waitingTime, 0);
-            const totalRT = p.reduce((acc, x) => acc + x.responseTime, 0);
-let scheduledPIDs = new Set(gantt.map(g => g.pid));
-if (scheduledPIDs.size !== p.length) {
-  console.warn("Some processes did not run or are missing.");
-}   
+        }
 
-            displayGanttChart(gantt);
-            displayMetricsTable(p);
-            displayAverages(p.length, totalTAT, totalWT, totalRT);
+        const totalTAT = p.reduce((acc, x) => acc + x.turnaroundTime, 0);
+        const totalWT = p.reduce((acc, x) => acc + x.waitingTime, 0);
+        const totalRT = p.reduce((acc, x) => acc + x.responseTime, 0);
+
+        let scheduledPIDs = new Set(gantt.map(g => g.pid));
+        if (scheduledPIDs.size !== p.length) {
+            console.warn("Some processes did not run or are missing.");
+        }
+
+        displayGanttChart(gantt);
+        displayMetricsTable(p);
+        displayAverages(p.length, totalTAT, totalWT, totalRT);
     }
 
         function displayGanttChart(gantt) {
@@ -338,9 +360,7 @@ block.className = "gantt-block";
 block.classList.add(`p${entry.pid}`); 
 
         // If pid already includes "P", don't add again
-        block.innerText = typeof entry.pid === 'string' && entry.pid.startsWith("P") 
-                        ? entry.pid.split(" ")[0] // remove extra info after space
-                        : `P${entry.pid}`;
+        block.innerHTML = `P${entry.pid}<br><small>Q${entry.queue ?? "-"}</small>`;
 
         barRow.appendChild(block);
 
