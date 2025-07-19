@@ -10,7 +10,7 @@
   <div class="container">
     <h1>CPU Scheduling Simulator</h1>
 
-    <!-- Algorithm Selection -->
+    
     <div class="section" id="algorithm-settings">
       <label for="algorithm">Choose Scheduling Algorithm:</label>
       <select id="algorithm">
@@ -22,21 +22,43 @@
       </select>
     </div>
 
-    <!-- Quantum Inputs (Conditional) -->
+    
     <div class="section" id="quantum-settings" style="display:none;">
       <label for="quantum">Time Quantum:</label>
       <input type="number" id="quantum" min="1" placeholder="e.g., 4"/>
     </div>
 
     <div class="section" id="mlfq-settings" style="display:none;">
-      <p>MLFQ Time Slices:</p>
-      <div class="mlfq-inputs">
+    <p>MLFQ Settings: Time Slice (Quantum) & Allotment</p>
+    
+    <div class="mlfq-inputs">
+        <div>
         <input type="number" placeholder="Q0 Time Slice" id="q0-quantum" />
+        <input type="number" placeholder="Q0 Allotment" id="q0-allotment" />
+        </div>
+        <div>
         <input type="number" placeholder="Q1 Time Slice" id="q1-quantum" />
+        <input type="number" placeholder="Q1 Allotment" id="q1-allotment" />
+        </div>
+        <div>
         <input type="number" placeholder="Q2 Time Slice" id="q2-quantum" />
+        <input type="number" placeholder="Q2 Allotment" id="q2-allotment" />
+        </div>
+        <div>
         <input type="number" placeholder="Q3 Time Slice" id="q3-quantum" />
-      </div>
+        <input type="number" placeholder="Q3 Allotment" id="q3-allotment" />
+        </div>
     </div>
+    </div>
+
+    <p>MLFQ Time Allotments:</p>
+    <div class="mlfq-inputs">
+        <input type="number" placeholder="Q0 Time Allotment" id="q0-allotment" />
+        <input type="number" placeholder="Q1 Time Allotment" id="q1-allotment" />
+        <input type="number" placeholder="Q2 Time Allotment" id="q2-allotment" />
+        <input type="number" placeholder="Q3 Time Allotment" id="q3-allotment" />
+    </div>
+
 
     <!-- Process Input Options -->
     <div class="section">
@@ -45,17 +67,17 @@
       <input type="number" id="numProcesses" placeholder="# of processes" style="width:150px;"/>
     </div>
 
-    <!-- Dynamic Process Table -->
+    
     <div class="section" id="process-inputs"></div>
 
-    <!-- Start Simulation -->
+    
     <div class="section">
       <button id="runBtn">Run Scheduler</button>
       <button id="resetBtn">Clear All</button>
       <div id="messageBox"></div>
     </div>
 
-    <!-- Gantt Chart Output -->
+    
     <div class="section">
         <h2>Gantt Chart (Each block = 1 unit time)</h2>
             <div id="ganttChartWrapper">
@@ -64,13 +86,12 @@
         </div>
     </div>
 
-    <!-- Metrics Table -->
+    
     <div class="section">
       <h2>Process Metrics</h2>
       <div id="metricsTable"></div>
     </div>
 
-    <!-- Average Metrics -->
     <div class="section">
       <h2>Average Metrics</h2>
       <div id="averageMetrics"></div>
