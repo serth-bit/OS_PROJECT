@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CPU Scheduling Visualization</title>
+  <link rel="stylesheet" href="schedulingcss.css"/>
+</head>
+<body>
+  <div class="container">
+    <h1>CPU Scheduling Simulator</h1>
+
+    <!-- Algorithm Selection -->
+    <div class="section" id="algorithm-settings">
+      <label for="algorithm">Choose Scheduling Algorithm:</label>
+      <select id="algorithm">
+        <option value="fcfs">First Come First Serve (FCFS)</option>
+        <option value="sjf">Shortest Job First (SJF)</option>
+        <option value="srtf">Shortest Remaining Time First (SRTF)</option>
+        <option value="rr">Round Robin</option>
+        <option value="mlfq">Multilevel Feedback Queue (MLFQ)</option>
+      </select>
+    </div>
+
+    <!-- Quantum Inputs (Conditional) -->
+    <div class="section" id="quantum-settings" style="display:none;">
+      <label for="quantum">Time Quantum:</label>
+      <input type="number" id="quantum" min="1" placeholder="e.g., 4"/>
+    </div>
+
+    <div class="section" id="mlfq-settings" style="display:none;">
+      <p>MLFQ Time Slices:</p>
+      <div class="mlfq-inputs">
+        <input type="number" placeholder="Q0 Time Slice" id="q0-quantum" />
+        <input type="number" placeholder="Q1 Time Slice" id="q1-quantum" />
+        <input type="number" placeholder="Q2 Time Slice" id="q2-quantum" />
+        <input type="number" placeholder="Q3 Time Slice" id="q3-quantum" />
+      </div>
+    </div>
+
+    <!-- Process Input Options -->
+    <div class="section">
+      <button id="manualInputBtn">Manual Input</button>
+      <button id="generateBtn">Generate Random Processes</button>
+      <input type="number" id="numProcesses" placeholder="# of processes" style="width:150px;"/>
+    </div>
+
+    <!-- Dynamic Process Table -->
+    <div class="section" id="process-inputs"></div>
+
+    <!-- Start Simulation -->
+    <div class="section">
+      <button id="runBtn">Run Scheduler</button>
+      <button id="resetBtn">Clear All</button>
+      <div id="messageBox"></div>
+    </div>
+
+    <!-- Gantt Chart Output -->
+    <div class="section">
+        <h2>Gantt Chart (Each block = 1 unit time)</h2>
+            <div id="ganttChartWrapper">
+            <div id="ganttChart"></div>
+            <div id="ganttTimes"></div>
+        </div>
+    </div>
+
+    <!-- Metrics Table -->
+    <div class="section">
+      <h2>Process Metrics</h2>
+      <div id="metricsTable"></div>
+    </div>
+
+    <!-- Average Metrics -->
+    <div class="section">
+      <h2>Average Metrics</h2>
+      <div id="averageMetrics"></div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
