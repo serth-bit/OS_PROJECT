@@ -258,10 +258,14 @@ if (scheduledPIDs.size !== p.length) {
             if (gantt.length && gantt[gantt.length - 1].end === undefined) {
     gantt[gantt.length - 1].end = time;
 }
-            let scheduledPIDs = new Set(gantt.map(g => g.pid));
-if (scheduledPIDs.size !== p.length) {
-  console.warn("Some processes did not run or are missing.");
-}
+        let scheduledPIDs = new Set(gantt.map(g => g.pid));
+            if (scheduledPIDs.size !== p.length) {
+            console.warn("Some processes did not run or are missing.");
+        }
+
+        if (gantt.length && gantt[gantt.length - 1].end === undefined) {
+        gantt[gantt.length - 1].end = time;
+        }
             displayGanttChart(gantt);
             displayMetricsTable(p);
             displayAverages(n, totalTAT, totalWT, totalRT);
@@ -315,7 +319,13 @@ if (scheduledPIDs.size !== p.length) {
         }
 
     function runMLFQ(p, quanta) {
-        const timeAllotments = [8, 16, 24, Infinity]; // Define your time allotment per level
+        
+        const timeAllotments = [
+        parseInt(document.getElementById("q0-allotment").value),
+        parseInt(document.getElementById("q1-allotment").value),
+        parseInt(document.getElementById("q2-allotment").value),
+        Infinity
+        ];
         let time = 0, queues = [[], [], [], []], gantt = [], remaining = {}, done = new Set();
         const timeSpent = {}; // Tracks how much time a process has used in its current level
 
@@ -349,7 +359,6 @@ if (scheduledPIDs.size !== p.length) {
             queue: qLevel
             });
 
-            gantt.push({ pid: proc.pid, start: start, end: time, queue: qLevel });
             time += runTime;
             remaining[proc.pid] -= runTime;
             timeSpent[proc.pid] += runTime;
@@ -382,6 +391,10 @@ if (scheduledPIDs.size !== p.length) {
             console.warn("Some processes did not run or are missing.");
         }
 
+        if (gantt.length && gantt[gantt.length - 1].end === undefined) {
+        gantt[gantt.length - 1].end = time;
+        }
+        
         displayGanttChart(gantt);
         displayMetricsTable(p);
         displayAverages(p.length, totalTAT, totalWT, totalRT);
